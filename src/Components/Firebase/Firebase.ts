@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signOut } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-import { collection, getDocs, getFirestore } from "firebase/firestore";
+import { collection, getDocs, getFirestore, query, where } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD1qc9tbzdxB-t-dABvisgzkebWL7VM1XY",
@@ -31,7 +31,8 @@ export interface Product {
   userId?: string;
 }
 
-const fetchFromFirestore = async (): Promise<Product[]> => {
+// Fetch all products
+export const fetchFromFirestore = async (): Promise<Product[]> => {
   try {
     const productsCollection = collection(fireStore, "products");
     const productSnapshot = await getDocs(productsCollection);
@@ -42,7 +43,6 @@ const fetchFromFirestore = async (): Promise<Product[]> => {
           ...doc.data(),
         } as Product)
     );
-    console.log("Fetched products from Firestore:", productList);
     return productList;
   } catch (error) {
     console.error("Error fetching products from Firestore:", error);
@@ -50,4 +50,17 @@ const fetchFromFirestore = async (): Promise<Product[]> => {
   }
 };
 
-export { auth, provider, storage, fireStore, fetchFromFirestore, signOut };
+// Fetch only products uploaded by current user
+export const fetchMyAds = async (userId: string): Promise<Product[]> => {
+  try {
+    const productsCollection = collection(fireStore, "products");
+    const q = query(productsCollection, where("userId", "==", userId));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+  } catch (error) {
+    console.error("Error fetching user's products:", error);
+    return [];
+  }
+};
+
+export { auth, provider, storage, fireStore, signOut };

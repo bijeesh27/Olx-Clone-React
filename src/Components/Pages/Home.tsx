@@ -1,46 +1,51 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../Navbar/Navbar";
 import Login from "../Modal/Login";
 import Sell from "../Modal/Sell";
 import Card from "../Card/Card";
-import { ItemsContext } from "../Context/Item";
-import { fetchFromFirestore } from "../Firebase/Firebase";
-import Footer from "../Footer/Footer";
+import type { Product } from "../Firebase/Firebase"; 
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, fetchFromFirestore, fetchMyAds } from "../Firebase/Firebase";
 
 const Home: React.FC = () => {
-  const [openModal, setModal] = useState<boolean>(false);
-  const [openModalSell, setModalSell] = useState<boolean>(false);
-
-  const toggleModal = () => setModal(!openModal);
-  const toggleModalSell = () => setModalSell(!openModalSell);
-
-  const itemsCtx = ItemsContext();
+  const [user] = useAuthState(auth);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showSell, setShowSell] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [myAds, setMyAds] = useState<Product[]>([]);
+  const [showMyAds, setShowMyAds] = useState(false);
 
   useEffect(() => {
-    const getItems = async () => {
-      const datas = await fetchFromFirestore();
-      itemsCtx?.setItems(datas);
+    const loadProducts = async () => {
+      const data = await fetchFromFirestore();
+      setProducts(data);
     };
-    getItems();
+    loadProducts();
   }, []);
 
-  useEffect(() => {
-    console.log("Updated Items:", itemsCtx?.items);
-  }, [itemsCtx?.items]);
+  const handleMyAd = async () => {
+    if (!user) return;
+    const myProducts = await fetchMyAds(user.uid);
+    setMyAds(myProducts);
+    setShowMyAds(true);
+  };
+
+  const handleCloseModals = () => {
+    setShowLogin(false);
+    setShowSell(false);
+  };
 
   return (
     <div>
-      <Navbar toggleModal={toggleModal} toggleModalSell={toggleModalSell} />
-      <Login toggleModal={toggleModal} status={openModal} />
-      <Sell
-        setItems={itemsCtx?.setItems!}
-        toggleModalSell={toggleModalSell}
-        status={openModalSell}
+      <Navbar
+        toggleModal={() => setShowLogin(true)}
+        toggleModalSell={() => setShowSell(true)}
+        handleMyAd={handleMyAd}
       />
-      <Card items={itemsCtx?.items || []} />
-      <Footer />
+      <Login toggleModal={handleCloseModals} status={showLogin} />
+      <Sell toggleModalSell={handleCloseModals} status={showSell} setItems={setProducts} />
+      {showMyAds ? <Card items={myAds} /> : <Card items={products} />}
     </div>
   );
 };
-
 export default Home;

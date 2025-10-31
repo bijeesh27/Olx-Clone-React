@@ -3,17 +3,18 @@ import logo from "../../assets/symbol.png";
 import search from "../../assets/search1.svg";
 import arrow from "../../assets/arrow-down.svg";
 import searchWt from "../../assets/search.svg";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, signOut } from "../Firebase/Firebase";
 import addBtn from "../../assets/addButton.png";
 import React, { useState, useRef, useEffect } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, signOut } from "../Firebase/Firebase";
 
 interface NavbarProps {
   toggleModal: () => void;
   toggleModalSell: () => void;
+  handleMyAd: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ toggleModal, toggleModalSell }) => {
+const Navbar: React.FC<NavbarProps> = ({ toggleModal, toggleModalSell, handleMyAd }) => {
   const [user] = useAuthState(auth);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -27,11 +28,9 @@ const Navbar: React.FC<NavbarProps> = ({ toggleModal, toggleModalSell }) => {
         setShowDropdown(false);
       }
     };
-
     if (showDropdown) {
       document.addEventListener("mousedown", handleClickOutside);
     }
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -57,13 +56,8 @@ const Navbar: React.FC<NavbarProps> = ({ toggleModal, toggleModalSell }) => {
             className="w-[50px] sm:w-[150px] md:w-[250px] lg:w-[270px] p-3 pl-8 pr-8 border-black border-solid border-2 rounded-md placeholder:text-ellipsis focus:outline-none focus:border-teal-300"
             type="text"
           />
-          <img
-            src={arrow}
-            alt=""
-            className="absolute top-4 right-3 w-5 cursor-pointer"
-          />
+          <img src={arrow} alt="" className="absolute top-4 right-3 w-5 cursor-pointer" />
         </div>
-
         <div className="ml-5 mr-2 relative w-full main-search">
           <input
             placeholder="Find Cars, Mobile Phones, and More..."
@@ -81,11 +75,9 @@ const Navbar: React.FC<NavbarProps> = ({ toggleModal, toggleModalSell }) => {
             />
           </div>
         </div>
-
         <div className="mx-1 sm:ml-5 sm:mr-5 relative lang">
           <p className="font-bold mr-3">English</p>
         </div>
-
         {!user ? (
           <p
             className="font-bold underline ml-5 cursor-pointer"
@@ -114,11 +106,16 @@ const Navbar: React.FC<NavbarProps> = ({ toggleModal, toggleModalSell }) => {
                 >
                   Logout
                 </button>
+                <button
+                  onClick={handleMyAd}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm border-t"
+                >
+                  My Ad page
+                </button>
               </div>
             )}
           </div>
         )}
-
         <img
           src={addBtn}
           onClick={user ? toggleModalSell : toggleModal}
@@ -126,7 +123,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleModal, toggleModalSell }) => {
           alt=""
         />
       </nav>
-
       <div className="w-full relative z-0 flex shadow-md p-2 pt-20 pl-10 pr-10 sm:pl-44 md:pr-44 sub-lists">
         <ul className="list-none flex items-center justify-between w-full">
           <li className="flex shrink-0">
@@ -145,5 +141,4 @@ const Navbar: React.FC<NavbarProps> = ({ toggleModal, toggleModalSell }) => {
     </div>
   );
 };
-
 export default Navbar;
