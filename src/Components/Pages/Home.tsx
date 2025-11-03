@@ -3,17 +3,35 @@ import Navbar from "../Navbar/Navbar";
 import Login from "../Modal/Login";
 import Sell from "../Modal/Sell";
 import Card from "../Card/Card";
-import type { Product } from "../Firebase/Firebase"; 
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, fetchFromFirestore, fetchMyAds } from "../Firebase/Firebase";
+import {
+  auth,
+  fetchFromFirestore,
+  fetchMyAds,
+  fireStore,
+} from "../Firebase/Firebase";
+import { doc, deleteDoc } from "firebase/firestore";
+
+export interface Item {
+  id: string | number;
+  imageUrl?: string;
+  title: string;
+  price: number;
+  category: string;
+  description?: string;
+  userName?: string;
+  createdAt?: string;
+  userId?: string;
+}
 
 const Home: React.FC = () => {
   const [user] = useAuthState(auth);
   const [showLogin, setShowLogin] = useState(false);
   const [showSell, setShowSell] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [myAds, setMyAds] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Item[]>([]);
+  const [myAds, setMyAds] = useState<Item[]>([]);
   const [showMyAds, setShowMyAds] = useState(false);
+  const [editItem, setEditItem] = useState<Item | null>(null);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -25,14 +43,28 @@ const Home: React.FC = () => {
 
   const handleMyAd = async () => {
     if (!user) return;
+    setShowMyAds(true);
     const myProducts = await fetchMyAds(user.uid);
     setMyAds(myProducts);
-    setShowMyAds(true);
+  };
+
+  const handleEdit = (item: Item) => {
+    setEditItem(item);
+    setShowSell(true);
+  };
+
+  const handleDelete = async (item: Item) => {
+    await deleteDoc(doc(fireStore, "products", item.id + ""));
+    if (user) {
+      const myProducts = await fetchMyAds(user.uid);
+      setMyAds(myProducts);
+    }
   };
 
   const handleCloseModals = () => {
     setShowLogin(false);
     setShowSell(false);
+    setEditItem(null);
   };
 
   return (
@@ -43,9 +75,24 @@ const Home: React.FC = () => {
         handleMyAd={handleMyAd}
       />
       <Login toggleModal={handleCloseModals} status={showLogin} />
-      <Sell toggleModalSell={handleCloseModals} status={showSell} setItems={setProducts} />
-      {showMyAds ? <Card items={myAds} /> : <Card items={products} />}
+      <Sell
+        toggleModalSell={handleCloseModals}
+        status={showSell}
+        setItems={setProducts}
+        editItem={editItem}
+      />
+      {showMyAds ? (
+        <Card
+          items={myAds}
+          isMyAdsPage={true}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      ) : (
+        <Card items={products} />
+      )}
     </div>
   );
 };
+
 export default Home;
