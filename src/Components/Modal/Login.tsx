@@ -1,8 +1,6 @@
 import { Modal, ModalBody, Carousel } from "flowbite-react";
 import google from "../../assets/google.png";
 import mobile from "../../assets/mobile.svg";
-import guitar from "../../assets/guita.png";
-import love from "../../assets/love.png";
 import avatar from "../../assets/avatar.png";
 import close from "../../assets/close.svg";
 import { signInWithPopup } from "firebase/auth";
@@ -78,24 +76,7 @@ const Login: React.FC<LoginProps> = ({ toggleModal, status }) => {
             onClick={(event) => event.stopPropagation()}
             className="w-full h-56 pb-5 rounded-none"
           >
-            <div className="flex flex-col items-center justify-center">
-              <img className="w-24 pb-5" src={guitar} alt="Car Image 1" />
-              <p
-                style={{ color: "#002f34" }}
-                className=" w-60 sm:w-72 text-center pb-5 font-semibold"
-              >
-                Help us become one of the safest place to buy and sell.
-              </p>
-            </div>
-            <div className="flex flex-col items-center justify-center">
-              <img className="w-24 pb-5" src={love} alt="Car Image 2" />
-              <p
-                style={{ color: "#002f34" }}
-                className=" w-60 sm:w-72 text-center pb-5 font-semibold"
-              >
-                Close deals from the comfort of your home.
-              </p>
-            </div>
+            
             <div className="flex flex-col items-center justify-center">
               <img className="w-24 pb-5" src={avatar} alt="Car Image 3" />
               <p

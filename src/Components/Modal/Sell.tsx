@@ -17,7 +17,12 @@ interface SellProps {
   editItem?: Item | null;
 }
 
-const Sell: React.FC<SellProps> = ({ toggleModalSell, status, setItems, editItem }) => {
+const Sell: React.FC<SellProps> = ({
+  toggleModalSell,
+  status,
+  setItems,
+  editItem,
+}) => {
   const [title, setTitle] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [price, setPrice] = useState<string>("");
@@ -25,6 +30,8 @@ const Sell: React.FC<SellProps> = ({ toggleModalSell, status, setItems, editItem
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string>("");
   const [submitting, setSubmitting] = useState<boolean>(false);
+
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const authCtx = UserAuth();
 
@@ -35,10 +42,12 @@ const Sell: React.FC<SellProps> = ({ toggleModalSell, status, setItems, editItem
     setDescription(editItem?.description || "");
     setImageUrl(editItem?.imageUrl || "");
     setImage(null);
+    setErrors({});
   }, [editItem, status]);
 
   const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) setImage(event.target.files[0]);
+    if (errors.image) setErrors((prev) => ({ ...prev, image: "" }));
   };
 
   const readImageAsDataUrl = (file: File): Promise<string> =>
@@ -53,10 +62,44 @@ const Sell: React.FC<SellProps> = ({ toggleModalSell, status, setItems, editItem
       reader.readAsDataURL(file);
     });
 
+  const validateFields = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!title.trim()) newErrors.title = "Title is required";
+    if (!category.trim()) newErrors.category = "Category is required";
+    if (!price.trim()) newErrors.price = "Price is required";
+    else if (isNaN(Number(price)) || Number(price) <= 0)
+      newErrors.price = "Price must be a positive number";
+    if (!description.trim()) newErrors.description = "Description is required";
+    if (!image && !imageUrl && !editItem) newErrors.image = "Image is required";
+    return newErrors;
+  };
+
+  const handleTitleChange = (value: string) => {
+    setTitle(value);
+    if (errors.title) setErrors((prev) => ({ ...prev, title: "" }));
+  };
+  const handleCategoryChange = (value: string) => {
+    setCategory(value);
+    if (errors.category) setErrors((prev) => ({ ...prev, category: "" }));
+  };
+  const handlePriceChange = (value: string) => {
+    setPrice(value);
+    if (errors.price) setErrors((prev) => ({ ...prev, price: "" }));
+  };
+  const handleDescriptionChange = (value: string) => {
+    setDescription(value);
+    if (errors.description) setErrors((prev) => ({ ...prev, description: "" }));
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!authCtx?.user) {
       alert("Please login to continue");
+      return;
+    }
+    const newErrors = validateFields();
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
       return;
     }
     setSubmitting(true);
@@ -72,30 +115,17 @@ const Sell: React.FC<SellProps> = ({ toggleModalSell, status, setItems, editItem
       }
     }
 
-    const trimmedTitle = title.trim();
-    const trimmedCategory = category.trim();
-    const trimmedPrice = price.trim();
-    const trimmedDescription = description.trim();
-
-    if (!trimmedTitle || !trimmedCategory || !trimmedPrice || !trimmedDescription) {
-      alert("All fields are required");
-      setSubmitting(false);
-      return;
-    }
-
     try {
       if (editItem) {
-        // Edit mode: update product
         const productRef = doc(fireStore, "products", editItem.id + "");
         await updateDoc(productRef, {
           title,
           category,
           price: parseFloat(price),
           description,
-          imageUrl: finalImageUrl
+          imageUrl: finalImageUrl,
         });
       } else {
-        // Add mode: new product
         await addDoc(collection(fireStore, "products"), {
           title,
           category,
@@ -129,7 +159,8 @@ const Sell: React.FC<SellProps> = ({ toggleModalSell, status, setItems, editItem
       theme={{
         content: {
           base: "relative w-full p-4 md:h-auto",
-          inner: "relative flex max-h-[90dvh] flex-col rounded-lg bg-white shadow dark:bg-gray-700",
+          inner:
+            "relative flex max-h-[90dvh] flex-col rounded-lg bg-white shadow dark:bg-gray-700",
         },
       }}
       onClick={toggleModalSell}
@@ -156,11 +187,39 @@ const Sell: React.FC<SellProps> = ({ toggleModalSell, status, setItems, editItem
           <p className="font-bold text-lg mb-3">
             {editItem ? "Edit Item" : "Sell Item"}
           </p>
-          <form onSubmit={handleSubmit}>
-            <Input setInput={setTitle} value={title} placeholder="Title" />
-            <Input setInput={setCategory} value={category} placeholder="Category" />
-            <Input setInput={setPrice} value={price} placeholder="Price" />
-            <Input setInput={setDescription} value={description} placeholder="Description" />
+          <form onSubmit={handleSubmit} noValidate>
+            <Input
+              setInput={handleTitleChange}
+              value={title}
+              placeholder="Title"
+            />
+            {errors.title && (
+              <p className="text-red-600 text-xs pt-1">{errors.title}</p>
+            )}
+            <Input
+              setInput={handleCategoryChange}
+              value={category}
+              placeholder="Category"
+            />
+            {errors.category && (
+              <p className="text-red-600 text-xs pt-1">{errors.category}</p>
+            )}
+            <Input
+              setInput={handlePriceChange}
+              value={price}
+              placeholder="Price"
+            />
+            {errors.price && (
+              <p className="text-red-600 text-xs pt-1">{errors.price}</p>
+            )}
+            <Input
+              setInput={handleDescriptionChange}
+              value={description}
+              placeholder="Description"
+            />
+            {errors.description && (
+              <p className="text-red-600 text-xs pt-1">{errors.description}</p>
+            )}
             <div className="pt-2 w-full relative">
               {image || imageUrl ? (
                 <div className="relative h-40 sm:h-60 w-full flex justify-center border-2 border-black border-solid rounded-md overflow-hidden">
@@ -176,14 +235,18 @@ const Sell: React.FC<SellProps> = ({ toggleModalSell, status, setItems, editItem
                     onChange={handleImageUpload}
                     type="file"
                     className="absolute inset-10 h-full w-full opacity-0 cursor-pointer z-30"
-                    required={!editItem}
                   />
                   <div className="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] flex flex-col items-center">
                     <img className="w-12" src={fileUpload} alt="" />
-                    <p className="text-center text-sm pt-2">Click to upload images</p>
+                    <p className="text-center text-sm pt-2">
+                      Click to upload images
+                    </p>
                     <p className="text-center text-sm pt-2">SVG, PNG, JPG</p>
                   </div>
                 </div>
+              )}
+              {errors.image && (
+                <p className="text-red-600 text-xs pt-1">{errors.image}</p>
               )}
             </div>
             {submitting ? (
@@ -195,6 +258,7 @@ const Sell: React.FC<SellProps> = ({ toggleModalSell, status, setItems, editItem
                 <button
                   className="w-full p-3 rounded-lg text-white"
                   style={{ backgroundColor: "#002f34" }}
+                  type="submit"
                 >
                   {editItem ? "Update Item" : "Sell Item"}
                 </button>
@@ -206,4 +270,5 @@ const Sell: React.FC<SellProps> = ({ toggleModalSell, status, setItems, editItem
     </Modal>
   );
 };
+
 export default Sell;
