@@ -11,6 +11,7 @@ import {
   fireStore,
 } from "../Firebase/Firebase";
 import { doc, deleteDoc } from "firebase/firestore";
+import { useSearchParams } from "react-router-dom";
 
 export interface Item {
   id: string | number;
@@ -29,17 +30,34 @@ const Home: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [showSell, setShowSell] = useState(false);
   const [products, setProducts] = useState<Item[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Item[]>([]);
   const [myAds, setMyAds] = useState<Item[]>([]);
   const [showMyAds, setShowMyAds] = useState(false);
   const [editItem, setEditItem] = useState<Item | null>(null);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const loadProducts = async () => {
       const data = await fetchFromFirestore();
       setProducts(data);
+      setFilteredProducts(data);
     };
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    const query = searchParams.get("search")?.toLowerCase() || "";
+    if (query) {
+        const filtered = products.filter(
+            (item) =>
+            item.title.toLowerCase().includes(query) ||
+            item.category.toLowerCase().includes(query)
+        );
+        setFilteredProducts(filtered);
+    } else {
+        setFilteredProducts(products);
+    }
+  }, [searchParams, products]);
 
   const handleMyAd = async () => {
     if (!user) return;
@@ -89,7 +107,7 @@ const Home: React.FC = () => {
           onDelete={handleDelete}
         />
       ) : (
-        <Card items={products} />
+        <Card items={filteredProducts} />
       )}
     </div>
   );

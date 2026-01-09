@@ -58,16 +58,22 @@ const Card: React.FC<CardProps> = ({ items, isMyAdsPage = false, onEdit, onDelet
               <img className="w-5" src={Favorite} alt="" />
             </div>
             {isMyAdsPage && (
-              <div className="absolute bottom-3 left-45 flex gap-2">
+              <div className="absolute bottom-3 right-3 flex gap-2">
                 <button
-                  onClick={() => onEdit && onEdit(item)}
-                  className="bg-yellow-400 rounded px-3 py-1 text-xs font-bold"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onEdit && onEdit(item);
+                  }}
+                  className="bg-yellow-400 rounded px-3 py-1 text-xs font-bold hover:bg-yellow-500 transition-colors"
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => onDelete && onDelete(item)}
-                  className="bg-red-500 text-white rounded px-3 py-1 text-xs font-bold"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onDelete && onDelete(item);
+                  }}
+                  className="bg-red-500 text-white rounded px-3 py-1 text-xs font-bold hover:bg-red-600 transition-colors"
                 >
                   Delete
                 </button>

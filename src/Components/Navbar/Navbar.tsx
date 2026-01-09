@@ -7,17 +7,22 @@ import addBtn from "../../assets/addButton.png";
 import React, { useState, useRef, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, signOut } from "../Firebase/Firebase";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 
 interface NavbarProps {
   toggleModal: () => void;
   toggleModalSell: () => void;
-  handleMyAd: () => void;
+  handleMyAd?: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ toggleModal, toggleModalSell, handleMyAd }) => {
   const [user] = useAuthState(auth);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -36,6 +41,10 @@ const Navbar: React.FC<NavbarProps> = ({ toggleModal, toggleModalSell, handleMyA
     };
   }, [showDropdown]);
 
+  useEffect(() => {
+     setSearchQuery(searchParams.get("search") || "");
+  }, [searchParams]);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -45,83 +54,136 @@ const Navbar: React.FC<NavbarProps> = ({ toggleModal, toggleModalSell, handleMyA
     setShowDropdown(false);
   };
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    navigate(`/?search=${query}`);
+  };
+
   return (
     <div>
       <nav className="fixed z-50 w-full overflow-visible p-2 pl-3 pr-3 shadow-md bg-slate-100 border-b-4 border-solid border-b-white">
-        <img src={logo} alt="" className="w-12" />
-        <div className="relative location-search ml-5">
-          <img src={search} alt="" className="absolute top-4 left-2 w-5" />
-          <input
-            placeholder="Search city, area, or locality..."
-            className="w-[50px] sm:w-[150px] md:w-[250px] lg:w-[270px] p-3 pl-8 pr-8 border-black border-solid border-2 rounded-md placeholder:text-ellipsis focus:outline-none focus:border-teal-300"
-            type="text"
-          />
-          <img src={arrow} alt="" className="absolute top-4 right-3 w-5 cursor-pointer" />
-        </div>
-        <div className="ml-5 mr-2 relative w-full main-search">
-          <input
-            placeholder="Find Cars, Mobile Phones, and More..."
-            className="w-full p-3 border-black border-solid border-2 rounded-md placeholder:text-ellipsis focus:outline-none focus:border-teal-300"
-            type="text"
-          />
-          <div
-            style={{ backgroundColor: "#002f34" }}
-            className="flex justify-center items-center absolute top-0 right-0 h-full rounded-e-md w-12"
-          >
-            <img
-              className="w-5 filter invert"
-              src={searchWt}
-              alt="Search Icon"
-            />
-          </div>
-        </div>
-        <div className="mx-1 sm:ml-5 sm:mr-5 relative lang">
-          <p className="font-bold mr-3">English</p>
-        </div>
-        {!user ? (
-          <p
-            className="font-bold underline ml-5 cursor-pointer"
-            style={{ color: "#002f34" }}
-            onClick={toggleModal}
-          >
-            Login
-          </p>
+        {showMobileSearch ? (
+             <div className="flex items-center w-full h-12">
+                 <img 
+                    src={arrow} 
+                    alt="Back" 
+                    className="w-6 h-6 mr-3 cursor-pointer rotate-90" 
+                    onClick={() => setShowMobileSearch(false)}
+                 />
+                 <div className="relative w-full">
+                    <input
+                        autoFocus
+                        placeholder="Search..."
+                        className="w-full p-3 border-black border-solid border-2 rounded-md focus:outline-none focus:border-teal-300"
+                        type="text"
+                        value={searchQuery}
+                        onChange={handleSearch}
+                    />
+                    <div
+                        style={{ backgroundColor: "#002f34" }}
+                        className="flex justify-center items-center absolute top-0 right-0 h-full rounded-e-md w-12"
+                    >
+                        <img
+                        className="w-5 filter invert"
+                        src={searchWt}
+                        alt="Search Icon"
+                        />
+                    </div>
+                </div>
+             </div>
         ) : (
-          <div className="relative">
-            <p
-              style={{ color: "#002f34" }}
-              className="font-bold ml-5 cursor-pointer"
-              onClick={() => setShowDropdown(!showDropdown)}
+        <div className="flex justify-between items-center w-full">
+            <Link to="/" className="cursor-pointer shrink-0">
+                <img src={logo} alt="" className="w-12" />
+            </Link>
+            <div className="relative location-search ml-5 hidden md:block">
+            <img src={search} alt="" className="absolute top-4 left-2 w-5" />
+            <input
+                placeholder="Search city, area, or locality..."
+                className="w-[50px] sm:w-[150px] md:w-[250px] lg:w-[270px] p-3 pl-8 pr-8 border-black border-solid border-2 rounded-md placeholder:text-ellipsis focus:outline-none focus:border-teal-300"
+                type="text"
+            />
+            <img src={arrow} alt="" className="absolute top-4 right-3 w-5 cursor-pointer" />
+            </div>
+            
+            <div className="ml-5 mr-2 relative w-full main-search hidden min-[458px]:block">
+            <input
+                placeholder="Find Cars, Mobile Phones, and More..."
+                className="w-full p-3 border-black border-solid border-2 rounded-md placeholder:text-ellipsis focus:outline-none focus:border-teal-300"
+                type="text"
+                value={searchQuery}
+                onChange={handleSearch}
+            />
+            <div
+                style={{ backgroundColor: "#002f34" }}
+                className="flex justify-center items-center absolute top-0 right-0 h-full rounded-e-md w-12 cursor-pointer"
             >
-              {user.displayName?.split(" ")[0]}
+                <img
+                className="w-5 filter invert"
+                src={searchWt}
+                alt="Search Icon"
+                />
+            </div>
+            </div>
+
+            {/* Mobile Search Icon */}
+             <div 
+                className="ml-auto mr-4 min-[458px]:hidden flex items-center justify-center cursor-pointer"
+                onClick={() => setShowMobileSearch(true)}
+             >
+                 <img src={search} alt="Search" className="w-6 h-6" />
+             </div>
+
+            <div className="mx-1 sm:ml-5 sm:mr-5 relative lang shrink-0">
+            <p className="font-bold mr-3">English</p>
+            </div>
+            {!user ? (
+            <p
+                className="font-bold underline ml-5 cursor-pointer shrink-0"
+                style={{ color: "#002f34" }}
+                onClick={toggleModal}
+            >
+                Login
             </p>
-            {showDropdown && (
-              <div
-                ref={dropdownRef}
-                className="absolute top-full left-0 bg-white border rounded shadow-md mt-1 min-w-max z-60"
-              >
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm border-t"
+            ) : (
+            <div className="relative shrink-0">
+                <p
+                style={{ color: "#002f34" }}
+                className="font-bold ml-5 cursor-pointer"
+                onClick={() => setShowDropdown(!showDropdown)}
                 >
-                  Logout
-                </button>
-                <button
-                  onClick={handleMyAd}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm border-t"
+                {user.displayName?.split(" ")[0]}
+                </p>
+                {showDropdown && (
+                <div
+                    ref={dropdownRef}
+                    className="absolute top-full right-0 bg-white border rounded shadow-md mt-1 min-w-max z-60"
                 >
-                  My Ad page
-                </button>
-              </div>
+                    <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm border-t"
+                    >
+                    Logout
+                    </button>
+                    <button
+                    onClick={handleMyAd}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm border-t"
+                    >
+                    My Ad page
+                    </button>
+                </div>
+                )}
+            </div>
             )}
-          </div>
+            <img
+            src={addBtn}
+            onClick={user ? toggleModalSell : toggleModal}
+            className="w-24 mx-1 sm:ml-5 sm:mr-5 shadow-xl rounded-full cursor-pointer shrink-0"
+            alt=""
+            />
+        </div>
         )}
-        <img
-          src={addBtn}
-          onClick={user ? toggleModalSell : toggleModal}
-          className="w-24 mx-1 sm:ml-5 sm:mr-5 shadow-xl rounded-full cursor-pointer"
-          alt=""
-        />
       </nav>
       <div className="w-full relative z-0 flex shadow-md p-2 pt-20 pl-10 pr-10 sm:pl-44 md:pr-44 sub-lists">
         <ul className="list-none flex items-center justify-between w-full">
@@ -142,3 +204,4 @@ const Navbar: React.FC<NavbarProps> = ({ toggleModal, toggleModalSell, handleMyA
   );
 };
 export default Navbar;
+

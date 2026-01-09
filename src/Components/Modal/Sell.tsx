@@ -222,19 +222,31 @@ const Sell: React.FC<SellProps> = ({
             )}
             <div className="pt-2 w-full relative">
               {image || imageUrl ? (
-                <div className="relative h-40 sm:h-60 w-full flex justify-center border-2 border-black border-solid rounded-md overflow-hidden">
+                <div className="relative h-40 sm:h-60 w-full flex justify-center border-2 border-black border-solid rounded-md overflow-hidden group">
                   <img
-                    className="object-contain"
+                    className="object-contain w-full h-full"
                     src={image ? URL.createObjectURL(image) : imageUrl}
                     alt=""
                   />
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <button
+                        type="button"
+                        onClick={() => {
+                            setImage(null);
+                            setImageUrl("");
+                        }}
+                        className="bg-white text-black px-4 py-2 rounded-md font-bold"
+                      >
+                        Change Image
+                      </button>
+                  </div>
                 </div>
               ) : (
                 <div className="relative h-40 sm:h-60 w-full border-2 border-black border-solid rounded-md">
                   <input
                     onChange={handleImageUpload}
                     type="file"
-                    className="absolute inset-10 h-full w-full opacity-0 cursor-pointer z-30"
+                    className="absolute inset-0 h-full w-full opacity-0 cursor-pointer z-30"
                   />
                   <div className="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] flex flex-col items-center">
                     <img className="w-12" src={fileUpload} alt="" />
